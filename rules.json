@@ -1,0 +1,52 @@
+{
+    "Scissors": {
+        "Defeats": [
+            "Paper", 
+            "Lizard"
+        ],
+        "Description": [
+            "cuts Paper",
+            "decapitates Lizard"
+        ]
+    },
+    "Paper": {
+        "Defeats": [
+            "Rock", 
+            "Spock"
+        ],
+        "Description": [
+            "covers Rock",
+            "disproves Spock"
+        ]
+    },
+    "Rock": {
+        "Defeats": [
+            "Scissors",
+            "Lizard"
+        ],
+        "Description": [
+            "crushes Scissors",
+            "crushes Lizard"
+        ]
+    },
+    "Lizard": {
+        "Defeats": [
+            "Paper", 
+            "Spock"
+        ],
+        "Description": [
+            "eats Paper",
+            "poisons Spock"
+        ]
+    },
+    "Spock": {
+        "Defeats": [
+            "Scissors", 
+            "Rock"
+        ],
+        "Description": [
+            "smashes Scissors",
+            "vaporizes Rock"
+        ]
+    }
+}
