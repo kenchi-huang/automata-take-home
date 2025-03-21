@@ -1,12 +1,10 @@
 import pandas as pd
 import datetime
-from Scoreboard import Scoreboard
+import os
 import pathlib
 
 class SaveUtils:
-    def __init__(self):
-        pass
-
+    @classmethod
     def create_save(self, save_name, player1_name, player2_name, scoreboard, enable_computer):
         save = {
             "player1": player1_name,
@@ -19,19 +17,27 @@ class SaveUtils:
         save_df = pd.DataFrame.from_dict(save, orient="index").transpose()
         save_df.to_csv("./Saves/" + save_name.replace(" ", "_") + ".csv", index=False)
 
+    @classmethod
     def delete_save(self, save_name):
-        pathlib.Path.unlink("./Saves/" + save_name + ".csv")
+        os.unlink("./Saves/" + save_name + ".csv")
     
+    @classmethod
     def overwrite_save(self, save_name, player1_name, player2_name, scoreboard, enable_computer):
         self.delete_save(save_name)
         self.create_save(save_name, player1_name, player2_name, scoreboard, enable_computer)
 
+    @classmethod
+    def autosave(self, player1_name, player2_name, scoreboard, enable_computer):
+        self.create_save("Autosave", player1_name, player2_name, scoreboard, enable_computer)
+
+    @classmethod
     def get_saves(self):
         saves = []
-        for file in pathlib.Path(r"./Saves/").glob("*.csv"):
+        for file in pathlib.Path(r"./Saves").glob("*.csv"):
             saves.append(file.name[:-4])
         return saves
     
+    @classmethod
     def get_save(self, save_name):
         try:
             save_df = pd.read_csv("./Saves/" + save_name + ".csv", index_col=False).transpose()
