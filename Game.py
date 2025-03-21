@@ -69,50 +69,79 @@ class Game:
     def initialise_game(self):
         self.print_slowly("Welcome to Rock, Paper, Scissors, Lizard, Spock")
 
+        if len(self.save.get_saves()) > 0:
+            selected_save = self.start_from_save()
+
+        if not selected_save:
+            self.player1_name = self.take_input(
+                "What is your name?", 
+                "[Name]: ",
+                "name",
+                False
+            )
+            self.print_slowly("Welcome {}".format(self.player1_name))
+            mode_choice = None
+            confirmation = None
+            while mode_choice is None:
+                self.print_slowly("Would you like to play against the computer [C] or another player [P] locally?")
+                mode_choice = input().lower()
+                if mode_choice == "computer" or mode_choice == "c":
+                    confirmation = self.take_yes_no_input("You have chosen to play against the computer, are you sure?")
+                    if not confirmation:
+                        mode_choice = None
+                        continue
+                    self.enable_computer = True
+                elif mode_choice == "player" or mode_choice == "p":
+                    confirmation = self.take_yes_no_input("You have chosen to play against another player locally, are you sure?")
+                    if not confirmation:
+                        mode_choice = None
+                        continue
+                    self.enable_computer = False
+                else:
+                    self.print_slowly(self.invalid_input_string)
+                    mode_choice = None
+                    continue
+
+                if not self.enable_computer:
+                    self.player2_name = self.take_input(
+                        "What is the other player's name?",
+                        "[Name]: ",
+                        "name",
+                        False
+                    )
+                else:
+                    self.player2_name = "The Computer"
         
-
-        self.player1_name = self.take_input(
-            "What is your name?", 
-            "[Name]: ",
-            "name",
-            False
-        )
-        self.print_slowly("Welcome {}".format(self.player1_name))
-        mode_choice = None
-        confirmation = None
-        while mode_choice is None:
-            self.print_slowly("Would you like to play against the computer [C] or another player [P] locally?")
-            mode_choice = input().lower()
-            if mode_choice == "computer" or mode_choice == "c":
-                confirmation = self.take_yes_no_input("You have chosen to play against the computer, are you sure?")
-                if not confirmation:
-                    mode_choice = None
-                    continue
-                self.enable_computer = True
-            elif mode_choice == "player" or mode_choice == "p":
-                confirmation = self.take_yes_no_input("You have chosen to play against another player locally, are you sure?")
-                if not confirmation:
-                    mode_choice = None
-                    continue
-                self.enable_computer = False
-            else:
-                self.print_slowly(self.invalid_input_string)
-                mode_choice = None
-                continue
-
-            if not self.enable_computer:
-                self.player2_name = self.take_input(
-                    "What is the other player's name?",
-                    "[Name]: ",
-                    "name",
-                    False
-                )
-            else:
-                self.player2_name = "The Computer"
-            
             self.print_slowly("The game will now start...")
             time.sleep(1.5)
             os.system('cls' if os.name == 'nt' else 'clear')
+
+    def start_from_save(self):
+        if self.take_yes_no_input("Do you want to start from a previous save?", False):
+            saves = self.save.get_saves()
+            self.print_options(saves)
+            choice = input("[0-{}]: ".format(len(saves) - 1))
+            save = None
+            try:
+                if type(eval(choice)) == int:
+                    if int(choice) < len(saves):
+                        save = self.save.get_save(saves[int(choice)])
+                        self.player1_name = save["player1"]
+                        self.player2_name = save["player2"]
+                        self.enable_computer = save["enable_computer"]
+                        self.scoreboard = Scoreboard(save["p1_score"], save["p2_score"], save["round"])
+                        return True
+                    else:
+                        self.print_slowly("That is not a valid save, please enter the corresponding number")
+                        self.print_options(saves)
+                else:
+                    self.print_slowly("That is not a valid save, please enter the corresponding number")
+                    self.print_options(saves)
+            except:
+                self.print_slowly("That is not a valid save, please enter the corresponding number")
+                self.print_options(saves)
+        else:
+            return False
 
     # compute_logic() takes as input
     # player1_input: a parameter of type String that is used to compare against player2_input
@@ -133,12 +162,12 @@ class Game:
             self.print_slowly("{} {}".format(player2_input, p2_description[p2_defeats.index(player1_input)]))
             return 0
 
-    def print_options(self):
-        for index, key in enumerate(self.logic_dict.keys()):
-            self.print_slowly("[{}] {}".format(index, key))
+    def print_options(self, input_list):
+        for index, value in enumerate(input_list):
+            self.print_slowly("[{}] {}".format(index, value))
 
     def get_move_choice(self):
-        self.print_options()
+        self.print_options(self.logic_dict.keys())
         selected_move = None
         self.print_slowly("What choice will you make?")
         while selected_move is None:
@@ -149,17 +178,17 @@ class Game:
                         return list(self.logic_dict.keys())[int(move_choice)]
                     else:
                         self.print_slowly("That is not a valid move, please enter the corresponding number")
-                        self.print_options()
+                        self.print_options(self.logic_dict.keys())
                 else:
                     self.print_slowly("That is not a valid move, please enter the corresponding number")
-                    self.print_options()
+                    self.print_options(self.logic_dict.keys())
             except:
                 self.print_slowly("That is not a valid move, please enter the corresponding number")
-                self.print_options()
+                self.print_options(self.logic_dict.keys())
 
     
     def get_move_choice_secretly(self, player_name):
-        self.print_options()
+        self.print_options(self.logic_dict.keys())
         selected_move = None
         self.print_slowly("What choice will {} make?".format(player_name))
         while selected_move is None:
@@ -170,13 +199,13 @@ class Game:
                         return list(self.logic_dict.keys())[int(move_choice)]
                     else:
                         self.print_slowly("That is not a valid move, please enter the corresponding number")
-                        self.print_options()
+                        self.print_options(self.logic_dict.keys())
                 else:
                     self.print_slowly("That is not a valid move, please enter the corresponding number")
-                    self.print_options()
+                    self.print_options(self.logic_dict.keys())
             except:
                 self.print_slowly("That is not a valid move, please enter the corresponding number")
-                self.print_options()
+                self.print_options(self.logic_dict.keys())
 
     def play_round(self):
         if self.enable_computer:
@@ -256,6 +285,3 @@ class Game:
 
     def debug(self):
         print(random.randrange(len(self.logic_dict)))
-
-game = Game()
-game.start_game()
