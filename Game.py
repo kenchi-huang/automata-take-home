@@ -3,10 +3,10 @@ import sys
 import os
 import pandas as pd
 from Scoreboard import Scoreboard
-from Save import Save
+from SaveUtils import SaveUtils
 from getpass import getpass
 import random
-import datetime
+from termcolor import colored
 
 class Game:
     def __init__(self, scoreboard = Scoreboard(), restart = False, player1_name = "", player2_name = "", enable_computer = True):
@@ -16,7 +16,7 @@ class Game:
         self.logic_dict = pd.read_json("rules.json").to_dict()
         self.enable_computer = enable_computer
         self.scoreboard = scoreboard
-        self.save = Save()
+        self.save_utils = SaveUtils()
         self.invalid_input_string = "That was not a valid input, please try again"
 
     def print_slowly(self, text):
@@ -35,7 +35,7 @@ class Game:
         yes_no_question = ""
         while len(output) == 0:
             self.print_slowly(question)
-            output = input(input_text)
+            output = input("[" + colored(input_text, "green") + "]: ")
             choice = None
             if confirm:
                 if not is_choice_question:
@@ -53,7 +53,7 @@ class Game:
         choice = None
         while choice is None:
             self.print_slowly(question)
-            choice = input("[Y/N]: ").lower()
+            choice = input("[" + colored("Y", "green") + "/" + colored("N", "green") + "]: ").lower()
             if choice == "y":
                 return True
             elif choice == "n":
@@ -69,13 +69,13 @@ class Game:
     def initialise_game(self):
         self.print_slowly("Welcome to Rock, Paper, Scissors, Lizard, Spock")
 
-        if len(self.save.get_saves()) > 0:
+        if len(self.save_utils.get_saves()) > 0:
             selected_save = self.start_from_save()
 
         if not selected_save:
             self.player1_name = self.take_input(
                 "What is your name?", 
-                "[Name]: ",
+                "Name",
                 "name",
                 False
             )
@@ -83,8 +83,8 @@ class Game:
             mode_choice = None
             confirmation = None
             while mode_choice is None:
-                self.print_slowly("Would you like to play against the computer [C] or another player [P] locally?")
-                mode_choice = input().lower()
+                self.print_slowly("Would you like to play against the computer " + colored("[C]", "green") + " or another player " + colored("[P]", "green") + " locally?")
+                mode_choice = input("[" + colored("C", "green") + "/" + colored("P", "green") + "]: ").lower()
                 if mode_choice == "computer" or mode_choice == "c":
                     confirmation = self.take_yes_no_input("You have chosen to play against the computer, are you sure?")
                     if not confirmation:
@@ -105,7 +105,7 @@ class Game:
                 if not self.enable_computer:
                     self.player2_name = self.take_input(
                         "What is the other player's name?",
-                        "[Name]: ",
+                        "Name",
                         "name",
                         False
                     )
@@ -118,30 +118,38 @@ class Game:
 
     def start_from_save(self):
         if self.take_yes_no_input("Do you want to start from a previous save?", False):
-            saves = self.save.get_saves()
+            saves = self.save_utils.get_saves()
             self.print_options(saves)
-            choice = input("[0-{}]: ".format(len(saves) - 1))
-            save = None
-            try:
-                if type(eval(choice)) == int:
-                    if int(choice) < len(saves):
-                        save = self.save.get_save(saves[int(choice)])
-                        self.player1_name = save["player1"]
-                        self.player2_name = save["player2"]
-                        self.enable_computer = save["enable_computer"]
-                        self.scoreboard = Scoreboard(save["p1_score"], save["p2_score"], save["round"])
-                        return True
-                    else:
-                        self.print_slowly("That is not a valid save, please enter the corresponding number")
-                        self.print_options(saves)
-                else:
-                    self.print_slowly("That is not a valid save, please enter the corresponding number")
-                    self.print_options(saves)
-            except:
-                self.print_slowly("That is not a valid save, please enter the corresponding number")
-                self.print_options(saves)
+            save_choice = self.get_user_input_on_options(saves, "That is not a valid save, please enter the corresponding number")
+            save = self.save_utils.get_save(saves[int(save_choice)])
+            self.player1_name = save["player1"]
+            self.player2_name = save["player2"]
+            self.enable_computer = save["enable_computer"]
+            self.scoreboard = Scoreboard(save["p1_score"], save["p2_score"], save["round"])
+            return True
         else:
             return False
+        
+    def get_user_input_on_options(self, options, error_message, secret = False):
+        output = None
+        while output is None:
+            if not secret:
+                choice = input("[" + colored("0", "green") + "-" + colored("{}".format(len(options) - 1), "green") + "]: ")
+            else:
+                choice = getpass("[" + colored("0", "green") + "-" + colored("{}".format(len(options) - 1), "green") + "]: ")
+            try:
+                if type(eval(choice)) == int:
+                    if int(choice) < len(options) and int(choice) >= 0:
+                        return int(choice)
+                    else:
+                        self.print_slowly(error_message)
+                        self.print_options(options)
+                else:
+                    self.print_slowly(error_message)
+                    self.print_options(options)
+            except: 
+                self.print_slowly(error_message)
+                self.print_options(options)
 
     # compute_logic() takes as input
     # player1_input: a parameter of type String that is used to compare against player2_input
@@ -164,48 +172,21 @@ class Game:
 
     def print_options(self, input_list):
         for index, value in enumerate(input_list):
-            self.print_slowly("[{}] {}".format(index, value))
+            self.print_slowly("[" + colored("{}".format(index), "green") + "] {}".format(value))
 
     def get_move_choice(self):
         self.print_options(self.logic_dict.keys())
-        selected_move = None
         self.print_slowly("What choice will you make?")
-        while selected_move is None:
-            move_choice = input("[0-{}]: ".format(len(self.logic_dict) - 1))
-            try:
-                if type(eval(move_choice)) == int:
-                    if int(move_choice) < len(self.logic_dict.keys()):
-                        return list(self.logic_dict.keys())[int(move_choice)]
-                    else:
-                        self.print_slowly("That is not a valid move, please enter the corresponding number")
-                        self.print_options(self.logic_dict.keys())
-                else:
-                    self.print_slowly("That is not a valid move, please enter the corresponding number")
-                    self.print_options(self.logic_dict.keys())
-            except:
-                self.print_slowly("That is not a valid move, please enter the corresponding number")
-                self.print_options(self.logic_dict.keys())
+        selected_move = self.get_user_input_on_options(self.logic_dict.keys(), "That is not a valid move, please enter the corresponding number")
+        return list(self.logic_dict.keys())[int(selected_move)]
 
     
     def get_move_choice_secretly(self, player_name):
         self.print_options(self.logic_dict.keys())
-        selected_move = None
         self.print_slowly("What choice will {} make?".format(player_name))
-        while selected_move is None:
-            move_choice = getpass("[0-{}]: ".format(len(self.logic_dict) - 1))
-            try:
-                if type(eval(move_choice)) == int:
-                    if int(move_choice) < len(self.logic_dict.keys()):
-                        return list(self.logic_dict.keys())[int(move_choice)]
-                    else:
-                        self.print_slowly("That is not a valid move, please enter the corresponding number")
-                        self.print_options(self.logic_dict.keys())
-                else:
-                    self.print_slowly("That is not a valid move, please enter the corresponding number")
-                    self.print_options(self.logic_dict.keys())
-            except:
-                self.print_slowly("That is not a valid move, please enter the corresponding number")
-                self.print_options(self.logic_dict.keys())
+        selected_move = self.get_user_input_on_options(self.logic_dict.keys(), "That is not a valid move, please enter the corresponding number", True)
+        return list(self.logic_dict.keys())[int(selected_move)]
+
 
     def play_round(self):
         if self.enable_computer:
@@ -234,7 +215,7 @@ class Game:
         self.scoreboard = Scoreboard(self.player1_name, self.player2_name)
     
     def autosave(self):
-        self.save.create_save("Autosave", self.player1_name, self.player2_name, self.scoreboard, self.enable_computer)
+        self.save_utils.create_save("Autosave", self.player1_name, self.player2_name, self.scoreboard, self.enable_computer)
 
     def game_loop(self):
         while True:
@@ -256,7 +237,7 @@ class Game:
                 while True:
                     save_name = self.take_input(
                         "What should your save be called?", 
-                        "[ENTER NAME]: ",
+                        "Save Name ",
                         "",
                         True,
                         False
@@ -267,21 +248,23 @@ class Game:
                         save_name = None
                         continue
                     else:
-                        if save_name.replace(" ", "_") in self.save.get_saves():
+                        if save_name.replace(" ", "_") in self.save_utils.get_saves():
                             overwrite = self.take_yes_no_input("Do you want to overwrite your save {}?".format(save_name_choice), False)
                             if overwrite:
-                                self.save.overwrite_save(save_name)
+                                self.save_utils.overwrite_save(save_name)
                             else:
                                 self.print_slowly("Please enter a new name")
                                 continue
                         else:
-                            self.save.create_save(save_name, self.player1_name, self.player2_name, self.scoreboard, self.enable_computer)
+                            self.save_utils.create_save(save_name, self.player1_name, self.player2_name, self.scoreboard, self.enable_computer)
                             self.print_slowly("Saved!")
                             break
             if not play_on:
                 self.autosave()
                 self.print_slowly("Autosaved!")
                 break
+            else:
+                os.system('cls' if os.name == 'nt' else 'clear')
 
     def debug(self):
         print(random.randrange(len(self.logic_dict)))
