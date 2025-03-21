@@ -73,6 +73,7 @@ class Game:
             time.sleep(1.5)
             os.system('cls' if os.name == 'nt' else 'clear')
 
+    # start_from_save() enables players to start the game from a previous save file
     def start_from_save(self):
         if InputUtils.take_yes_no_input("Do you want to start from a previous save?", False):
             saves = SaveUtils.get_saves()
