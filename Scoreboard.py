@@ -1,5 +1,5 @@
 class Scoreboard:
-    def __init__(self, player1_name, player2_name, player1_score = 0, player2_score = 0, round = 1):
+    def __init__(self, player1_score = 0, player2_score = 0, round = 1):
         self.player1_score = player1_score
         self.player2_score = player2_score
         self.round = round
@@ -16,9 +16,8 @@ class Scoreboard:
     def increment_p1_score(self):
         self.player1_score += 1
     
-    def increment_p2_Score(self):
+    def increment_p2_score(self):
         self.player2_score += 1
     
     def increment_round(self):
         self.round += 1
-
