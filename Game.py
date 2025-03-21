@@ -25,7 +25,7 @@ class Game:
     # Player's name is taken as input to terminal
     def initialise_game(self):
         PrintUtils.print_slowly("Welcome to Rock, Paper, Scissors, Lizard, Spock")
-
+        selected_save = False
         if len(SaveUtils.get_saves()) > 0:
             selected_save = self.start_from_save()
 
