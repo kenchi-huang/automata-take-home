@@ -3,7 +3,7 @@ import datetime
 from Scoreboard import Scoreboard
 import pathlib
 
-class Save:
+class SaveUtils:
     def __init__(self):
         pass
 
